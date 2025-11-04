@@ -1,19 +1,19 @@
 @echo off
 setlocal enabledelayedexpansion
-title Instalador Automático de Python + App Tkinter
+title Automatic Installer for Python + Tkinter App
 echo ======================================================
-echo          Instalador de Python y Dependencias
+echo          Python and Dependencies Installer
 echo ======================================================
 
-:: Paso 1: Verificar si Python ya está instalado
+:: Step 1: Check if Python is already installed
 python --version >nul 2>&1
 if %errorlevel% equ 0 (
-    echo ✅ Python ya está instalado.
+    echo ✅ Python is already installed.
     goto check_path
 )
 
-:: Paso 2: Detectar arquitectura del sistema
-echo Python no está instalado. Detectando tipo de sistema...
+:: Step 2: Detect system architecture
+echo Python is not installed. Detecting system type...
 set "ARCH="
 wmic os get osarchitecture | find "64" >nul && set "ARCH=64" || set "ARCH=32"
 
@@ -23,37 +23,31 @@ if "%ARCH%"=="64" (
     set "PY_URL=https://www.python.org/ftp/python/3.12.6/python-3.12.6.exe"
 )
 
-echo Detectado sistema operativo de %ARCH% bits.
-echo Descargando instalador de Python desde:
+echo Detected %ARCH%-bit operating system.
+echo Downloading Python installer from:
 echo %PY_URL%
 
-:: Paso 3: Descargar instalador
+:: Step 3: Download the installer
 powershell -Command "Invoke-WebRequest -Uri '%PY_URL%' -OutFile 'python_installer.exe'"
 
 if not exist python_installer.exe (
-    echo ❌ Error: no se pudo descargar el instalador de Python.
+    echo ❌ Error: Could not download the Python installer.
     pause
     exit /b
 )
 
-:: Paso 4: Instalar Python en modo silencioso (con PATH)
-echo Instalando Python...
+:: Step 4: Install Python silently (with PATH)
+echo Installing Python...
 start /wait python_installer.exe /quiet InstallAllUsers=1 PrependPath=1 Include_pip=1
 
-:: Paso 5: Confirmar instalación
-python --version >nul 2>&1
-if %errorlevel% neq 0 (
-    echo ❌ Python no se instaló correctamente.
-    pause
-    exit /b
-)
+
 
 :check_path
 echo ======================================================
-echo Verificando PATH del sistema...
+echo Verifying system PATH...
 echo ======================================================
 
-:: Detectar carpeta de instalación de Python
+:: Detect Python installation folder
 for /f "tokens=2*" %%A in ('reg query "HKLM\SOFTWARE\Python\PythonCore\3.12\InstallPath" /v ExecutablePath 2^>nul') do set PY_PATH=%%B
 
 if not defined PY_PATH (
@@ -63,42 +57,21 @@ if not defined PY_PATH (
 set "PY_DIR=%PY_PATH:\python.exe=%"
 set "SCRIPTS_DIR=%PY_DIR%\Scripts"
 
-:: Agregar rutas al PATH si faltan
-echo Verificando variables de entorno...
-setx PATH "%PATH%;%PY_DIR%;%SCRIPTS_DIR%" /M
+echo Python installation directory: %PY_DIR%
+echo Scripts directory: %SCRIPTS_DIR%
 
-echo ✅ PATH actualizado con:
-echo    %PY_DIR%
-echo    %SCRIPTS_DIR%
-
-:: Actualizar sesión actual del CMD
-set "PATH=%PATH%;%PY_DIR%;%SCRIPTS_DIR%"
-
-:: Paso 6: Instalar dependencias
+:: Step 6: Install required libraries
 echo ======================================================
-echo Instalando dependencias desde requirements.txt
+echo Installing required Python libraries...
 echo ======================================================
 
-python -m pip install --upgrade pip
+pip install --upgrade pip
+pip install pillow PyPDF2 PyMuPDF
 
-if exist requirements.txt (
-    python -m pip install -r requirements.txt
-) else (
-    echo ⚠️ No se encontró archivo requirements.txt, se omite instalación de librerías.
-)
-
-:: Paso 7: Ejecutar aplicación
 echo ======================================================
-echo Instalación completada ✅
+echo ✅ Installation completed successfully!
+echo You can now use the Tkinter App.
 echo ======================================================
-
-if exist app.py (
-    echo Iniciando la aplicación...
-    python app.py
-) else if exist dist\app.exe (
-    echo Ejecutando versión compilada...
-    start dist\app.exe
-)
 
 pause
-exit /b
+exit
