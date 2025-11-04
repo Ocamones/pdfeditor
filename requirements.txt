@@ -1,4 +1,5 @@
 PyPDF2
 Pillow
 PyMuPDF
+
 pyinstaller
